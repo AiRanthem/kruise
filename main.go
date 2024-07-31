@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/openkruise/kruise/pkg/logs"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
@@ -99,6 +100,7 @@ func main() {
 	var leaderElectionId string
 	var retryPeriod time.Duration
 	var controllerCacheSyncTimeout time.Duration
+	var loggingFormat string
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&healthProbeAddr, "health-probe-addr", ":8000", "The address the healthz/readyz endpoint binds to.")
@@ -123,6 +125,7 @@ func main() {
 	flag.DurationVar(&retryPeriod, "leader-election-retry-period", defaultRetryPeriod,
 		"leader-election-retry-period is the duration the LeaderElector clients should wait between tries of actions. Default is 2 seconds.")
 	flag.DurationVar(&controllerCacheSyncTimeout, "controller-cache-sync-timeout", defaultControllerCacheSyncTimeout, "CacheSyncTimeout refers to the time limit set to wait for syncing caches. Defaults to 2 minutes if not set.")
+	flag.StringVar(&loggingFormat, "logging-format", logs.LoggingFormatText, "Logging format, one of 'text' or 'json', default is 'text'.")
 
 	utilfeature.DefaultMutableFeatureGate.AddFlag(pflag.CommandLine)
 	klog.InitFlags(nil)
@@ -245,6 +248,9 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+
+	setupLog.Info("setting logging format", "format", loggingFormat)
+	logs.SetLoggingFormat(loggingFormat)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctx); err != nil {
